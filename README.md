@@ -1,6 +1,4 @@
-# 🏪 Digital Store
-
-A modern, customizable digital storefront and administration system built for high performance and visual excellence. This platform allows you to showcase digital products, manage orders, and customize your store's branding through a powerful admin dashboard.
+A modern, customizable digital storefront and administration system built for high performance and visual excellence. This project has been migrated to a **pure HTML/JS implementation** to ensure seamless operation across all environments (including `file://` protocols) and to eliminate CORS-related issues.
 
 ---
 
@@ -22,29 +20,24 @@ A modern, customizable digital storefront and administration system built for hi
 
 ---
 
-## 🛠️ Tech Stack
-
-- **Framework**: [React 19](https://react.dev/)
-- **Build Tool**: [Vite](https://vitejs.dev/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Backend / Database**: [Firebase](https://firebase.google.com/) (Firestore, Auth, Storage)
-- **Routing**: [React Router DOM v7](https://reactrouter.com/)
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **State Management**: React Context API
+- **Core**: Vanilla HTML5, CSS3, and JavaScript (ES6+)
+- **Backend / Database**: [Firebase](https://firebase.google.com/) (Firestore, Auth, Storage) via Compat SDK
+- **Styling**: Modern CSS with Glassmorphism and Backdrop filters
+- **Icons**: SVG-based icons (Lucide-inspired)
+- **Deployment**: Zero-build dependency (Static HTML)
 
 ---
 
-## 📁 Project Structure
-
 ```text
-src/
-├── components/     # Reusable UI components
-├── contexts/       # Auth and Cart context providers
-├── layouts/        # Page layouts (Admin, Store)
-├── pages/          # Page components
-│   └── store/      # Customer-facing store pages
-├── assets/         # Images and global styles
-└── firebase.js     # Firebase configuration and initialization
+digital-store/
+├── index.html          # Main shop storefront
+├── product.html        # Product details page
+├── cart.html           # Shopping cart page
+├── checkout.html       # Checkout process
+├── legacy_js_css/      # Shared assets and config
+│   └── js/config.js    # Centralized Firebase config (for reference)
+├── FIREBASE_SETUP.md   # Setup instructions
+└── .env                # Environment variables (for reference)
 ```
 
 ---
@@ -64,38 +57,26 @@ src/
    cd digital-store
    ```
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+2. **Configure Firebase**
+   - Follow the [Firebase Setup Guide](./FIREBASE_SETUP.md).
+   - Important: Since this version uses static HTML, you must update the `firebaseConfig` object inside the `<script>` tag of **each HTML file** (`index.html`, `product.html`, etc.) or use a local injection method if preferred.
 
-3. **Configure Firebase**
-   - Follow the detailed [Firebase Setup Guide](./FIREBASE_SETUP.md) to initialize your database and authentication.
-   - Create a `.env` file in the root directory and add your Firebase credentials.
-
-4. **Start the development server**
-   ```bash
-   npm run dev
-   ```
-
-5. **Build for production**
-   ```bash
-   npm run build
-   ```
+3. **Run the Application**
+   - Simply open `index.html` in any modern web browser.
+   - Alternatively, use a static server like **Live Server** (VS Code extension) for the best experience.
 
 ---
 
 ## 📖 Usage
 
-### Admin Access
-To access the admin panel:
-1. Navigate to `/admin/login`.
-2. Enter your admin credentials (configured in Firebase).
-3. Access the dashboard at `/` to manage your store.
-
 ### Customer Storefront
-- Visit `/store` to view the customer-facing shop.
-- Browse products, add them to your cart, and proceed to checkout.
+- Open `index.html` to browse products.
+- Click on any product to view details (`product.html`).
+- Manage your selection in `cart.html`.
+- Complete orders via `checkout.html`.
+
+### Admin Dashboard (Coming Soon)
+- The unified HTML version is currently focusing on the customer experience. For admin features, please refer to the `legacy/` directory or wait for the next update.
 
 ---
 

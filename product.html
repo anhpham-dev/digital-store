@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details - Digital Store</title>
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <style>
+        /* REUSED CSS FROM STYLE.CSS */
+        :root {
+            --bg-color: #0f172a;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --card-bg: rgba(30, 41, 59, 0.4);
+            --success: #22c55e;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-color);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-glass {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-glass:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background-color: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 1rem 0;
+        }
+
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: white;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .logo-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 0.75rem;
+            background: linear-gradient(135deg, var(--primary-color), #2563eb);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: white;
+        }
+
+        .cart-btn {
+            position: relative;
+            padding: 0.5rem;
+            color: var(--text-muted);
+            transition: color 0.2s;
+        }
+
+        .cart-btn:hover {
+            color: white;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            min-width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 0.25rem;
+        }
+
+        footer {
+            margin-top: 4rem;
+            padding: 2rem 0;
+            border-top: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+
+        .mb-8 {
+            margin-bottom: 2rem;
+        }
+
+        .text-2xl {
+            font-size: 1.5rem;
+            line-height: 2rem;
+        }
+
+        .text-3xl {
+            font-size: 1.875rem;
+            line-height: 2.25rem;
+        }
+
+        .font-bold {
+            font-weight: 700;
+        }
+
+        /* Product Specific */
+        .custom-input {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 0.5rem;
+            color: white;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .custom-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+        }
+
+        .checkbox-input {
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 0.25rem;
+            accent-color: var(--primary-color);
+        }
+    </style>
+</head>
+
+<body>
+    <header></header>
+
+    <main class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+        <a href="index.html" class="btn btn-glass mb-8">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m12 19-7-7 7-7" />
+                <path d="M19 12H5" />
+            </svg>
+            Back to Store
+        </a>
+
+        <div id="product-container">
+            <div class="card text-center" style="padding: 4rem;">
+                <div style="font-size: 1.25rem;">Loading product details...</div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Digital Store. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // CONFIG
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID",
+            measurementId: "YOUR_MEASUREMENT_ID"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // ----- CART LOGIC (DUPLICATED) -----
+        class Cart {
+            constructor() {
+                this.items = JSON.parse(localStorage.getItem('digitalStoreCart')) || [];
+                this.listeners = [];
+            }
+            save() { localStorage.setItem('digitalStoreCart', JSON.stringify(this.items)); this.notify(); }
+            add(product, customizations = {}) {
+                this.items.push({
+                    id: `${product.id}_${Date.now()}`,
+                    productId: product.id, title: product.title, price: product.price, imageUrl: product.imageUrl,
+                    customizations, quantity: 1
+                });
+                this.save();
+            }
+            remove(id) { this.items = this.items.filter(item => item.id !== id); this.save(); }
+            updateQuantity(id, qty) {
+                if (qty < 1) { this.remove(id); return; }
+                this.items = this.items.map(i => i.id === id ? { ...i, quantity: qty } : i);
+                this.save();
+            }
+            clear() { this.items = []; this.save(); }
+            getTotal() { return this.items.reduce((s, i) => s + i.price * i.quantity, 0); }
+            getCount() { return this.items.reduce((s, i) => s + i.quantity, 0); }
+            subscribe(cb) { this.listeners.push(cb); cb(this); }
+            notify() { this.listeners.forEach(cb => cb(this)); }
+        }
+        const cart = new Cart();
+
+        // ----- SHARED UI -----
+        async function renderHeader() {
+            const headerEl = document.querySelector('header');
+            if (!headerEl) return;
+
+            // Re-fetch or default settings
+            // For single-page simplicity we might skip re-fetch or just default specific page
+            // But let's re-fetch for consistency
+            let shopName = 'Digital Store';
+            let themeColor = '#3b82f6';
+            try {
+                const docSnap = await db.collection('shop_settings').doc('main').get();
+                if (docSnap.exists) {
+                    const data = docSnap.data();
+                    shopName = data.name || shopName;
+                    themeColor = data.themeColor || themeColor;
+                    document.documentElement.style.setProperty('--primary-color', themeColor);
+                }
+            } catch (e) { }
+
+            headerEl.innerHTML = `
+                <div class="container">
+                    <div class="nav-content">
+                        <a href="index.html" class="logo">
+                            <div class="logo-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/></svg></div>
+                            <span>${shopName}</span>
+                        </a>
+                        <nav class="nav-links">
+                            <a href="index.html" class="nav-link">Products</a>
+                            <a href="cart.html" class="cart-btn" aria-label="Cart">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                                <span id="cart-count-badge" class="cart-badge hidden">0</span>
+                            </a>
+                        </nav>
+                    </div>
+                </div>
+            `;
+            cart.subscribe(c => {
+                const count = c.getCount();
+                const badge = document.getElementById('cart-count-badge');
+                if (badge) { badge.innerText = count; badge.classList.toggle('hidden', count === 0); }
+            });
+        }
+
+        // ----- PRODUCT SPECIFIC -----
+        const container = document.getElementById('product-container');
+        const parsedUrl = new URL(window.location.href);
+        const productId = parsedUrl.searchParams.get('id');
+        let currentProduct = null;
+        let currentCustomizations = {};
+
+        async function init() {
+            renderHeader();
+            if (!productId) { window.location.href = 'index.html'; return; }
+
+            try {
+                const docSnap = await db.collection('products').doc(productId).get();
+                if (!docSnap.exists) { window.location.href = 'index.html'; return; }
+
+                currentProduct = { id: docSnap.id, ...docSnap.data() };
+                renderProduct(currentProduct);
+                initCustomizations(currentProduct.customizations);
+            } catch (error) {
+                container.innerHTML = `<div class="card text-center" style="padding: 4rem;"><p style="color: var(--danger);">Failed to load product.</p><a href="index.html" class="btn btn-primary">Go Home</a></div>`;
+            }
+        }
+
+        function initCustomizations(customizationsDef) {
+            if (!customizationsDef) return;
+            currentCustomizations = {};
+            customizationsDef.forEach(c => {
+                if (c.type === 'checkbox') currentCustomizations[c.label] = false;
+                else if (c.type === 'select' && c.options?.length > 0) currentCustomizations[c.label] = c.options[0];
+                else currentCustomizations[c.label] = '';
+            });
+        }
+
+        function renderProduct(product) {
+            const hasCustomizations = product.customizations && product.customizations.length > 0;
+            let customizationHtml = '';
+            if (hasCustomizations) {
+                const fields = product.customizations.map((c) => {
+                    let inputHtml = '';
+                    if (c.type === 'text') inputHtml = `<input type="text" class="custom-input" data-label="${c.label}" placeholder="Enter ${c.label}..." onchange="handleInputChange(this)">`;
+                    else if (c.type === 'select') {
+                        const options = c.options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+                        inputHtml = `<select class="custom-input" data-label="${c.label}" onchange="handleInputChange(this)">${options}</select>`;
+                    } else if (c.type === 'checkbox') {
+                        inputHtml = `<label class="checkbox-label"><input type="checkbox" class="checkbox-input" data-label="${c.label}" onchange="handleInputChange(this)"><span class="text-gray-300">Yes, add this option</span></label>`;
+                    }
+                    return `<div class="mb-4"><label class="block text-sm font-bold text-gray-300 mb-2">${c.label}</label>${inputHtml}</div>`;
+                }).join('');
+                customizationHtml = `<div class="mb-8 p-4 card" style="background-color: rgba(30, 41, 59, 0.3);"><div class="flex items-center space-x-2 mb-4"><h2 class="text-xl font-semibold mb-4">Customize</h2></div>${fields}</div>`;
+            }
+
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 3rem;">
+                    <div style="position: relative;">
+                         <div style="aspect-ratio: 1/1; background-color: rgba(255,255,255,0.05); border-radius: 1rem; overflow: hidden; border: 1px solid var(--glass-border);">
+                            ${product.imageUrl ? `<img src="${product.imageUrl}" alt="${product.title}" style="width: 100%; height: 100%; object-fit: cover;">` : ''}
+                        </div>
+                        <div style="position: absolute; top: 1rem; right: 1rem; background-color: var(--primary-color); padding: 0.5rem 1rem; border-radius: 0.75rem; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">$${parseFloat(product.price).toFixed(2)}</div>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold mb-4">${product.title}</h1>
+                        <p class="text-muted mb-8" style="font-size: 1.125rem; white-space: pre-wrap;">${product.description || "No description available."}</p>
+                        ${customizationHtml}
+                        <button id="add-to-cart-btn" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.125rem; margin-top: auto;">Add to Cart - $${parseFloat(product.price).toFixed(2)}</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('add-to-cart-btn').addEventListener('click', addToCart);
+        }
+
+        window.handleInputChange = function (input) {
+            const label = input.dataset.label;
+            const value = input.type === 'checkbox' ? input.checked : input.value;
+            currentCustomizations[label] = value;
+        };
+
+        function addToCart() {
+            if (!currentProduct) return;
+            cart.add(currentProduct, currentCustomizations);
+            const btn = document.getElementById('add-to-cart-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `Added to Cart!`;
+            btn.style.backgroundColor = 'var(--success)';
+            btn.disabled = true;
+            setTimeout(() => { btn.innerHTML = originalText; btn.style.backgroundColor = ''; btn.disabled = false; }, 2000);
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

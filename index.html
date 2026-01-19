@@ -1,13 +1,493 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>app</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Digital Store</title>
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --card-bg: rgba(30, 41, 59, 0.4);
+            --success: #22c55e;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-color);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        /* Utilities */
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-glass {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-glass:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        /* Header */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background-color: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 1rem 0;
+        }
+
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: white;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .logo-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 0.75rem;
+            background: linear-gradient(135deg, var(--primary-color), #2563eb);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: white;
+        }
+
+        /* Cart Badge */
+        .cart-btn {
+            position: relative;
+            padding: 0.5rem;
+            color: var(--text-muted);
+            transition: color 0.2s;
+        }
+
+        .cart-btn:hover {
+            color: white;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            min-width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 0.25rem;
+        }
+
+        /* Grid Layouts */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 4rem;
+            padding: 2rem 0;
+            border-top: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* Utilities */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+
+        .mb-8 {
+            margin-bottom: 2rem;
+        }
+
+        .text-2xl {
+            font-size: 1.5rem;
+            line-height: 2rem;
+        }
+
+        .text-3xl {
+            font-size: 1.875rem;
+            line-height: 2.25rem;
+        }
+
+        .font-bold {
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body>
+    <header></header>
+
+    <!-- Banner (Hidden by default, shown via JS if URL exists) -->
+    <div id="banner-container" class="hidden">
+        <div style="position: relative; height: 16rem; overflow: hidden;">
+            <img id="banner-img" src="" alt="Store Banner" style="width: 100%; height: 100%; object-fit: cover;">
+            <div
+                style="position: absolute; inset: 0; background: linear-gradient(to top, var(--bg-color), transparent);">
+            </div>
+        </div>
+    </div>
+
+    <main class="container">
+        <h1 class="text-3xl font-bold mb-8" style="margin-top: 2rem;">Latest Products</h1>
+        <div id="product-list" class="product-grid">
+            <!-- Loading State -->
+            <div class="card text-center" style="grid-column: 1 / -1; padding: 4rem;">
+                <div style="font-size: 1.25rem;">Loading products...</div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Digital Store. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // CONFIG
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID",
+            measurementId: "YOUR_MEASUREMENT_ID"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // ----- CART LOGIC -----
+        class Cart {
+            constructor() {
+                this.items = JSON.parse(localStorage.getItem('digitalStoreCart')) || [];
+                this.listeners = [];
+            }
+
+            save() {
+                localStorage.setItem('digitalStoreCart', JSON.stringify(this.items));
+                this.notify();
+            }
+
+            add(product, customizations = {}) {
+                const cartItem = {
+                    id: `${product.id}_${Date.now()}`,
+                    productId: product.id,
+                    title: product.title,
+                    price: product.price,
+                    imageUrl: product.imageUrl,
+                    customizations,
+                    quantity: 1
+                };
+                this.items.push(cartItem);
+                this.save();
+            }
+
+            remove(cartItemId) {
+                this.items = this.items.filter(item => item.id !== cartItemId);
+                this.save();
+            }
+
+            updateQuantity(cartItemId, quantity) {
+                if (quantity < 1) {
+                    this.remove(cartItemId);
+                    return;
+                }
+                this.items = this.items.map(item =>
+                    item.id === cartItemId ? { ...item, quantity } : item
+                );
+                this.save();
+            }
+
+            clear() {
+                this.items = [];
+                this.save();
+            }
+
+            getTotal() {
+                return this.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            }
+
+            getCount() {
+                return this.items.reduce((sum, item) => sum + item.quantity, 0);
+            }
+
+            subscribe(callback) {
+                this.listeners.push(callback);
+                // Initial call
+                callback(this);
+            }
+
+            notify() {
+                this.listeners.forEach(cb => cb(this));
+            }
+        }
+        const cart = new Cart();
+
+        // ----- SHARED UI -----
+        async function renderHeader() {
+            const headerEl = document.querySelector('header');
+            if (!headerEl) return;
+
+            let shopName = 'Digital Store';
+            let themeColor = '#3b82f6';
+
+            try {
+                const docRef = db.collection('shop_settings').doc('main');
+                const docSnap = await docRef.get();
+                if (docSnap.exists) {
+                    const data = docSnap.data();
+                    shopName = data.name || shopName;
+                    themeColor = data.themeColor || themeColor;
+
+                    document.documentElement.style.setProperty('--primary-color', themeColor);
+                    document.documentElement.style.setProperty('--primary-hover', adjustColorOpacity(themeColor, 0.9));
+                }
+            } catch (e) {
+                console.warn("Could not load shop settings", e);
+            }
+
+            headerEl.innerHTML = `
+                <div class="container">
+                    <div class="nav-content">
+                        <a href="index.html" class="logo">
+                            <div class="logo-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/></svg>
+                            </div>
+                            <span>${shopName}</span>
+                        </a>
+                        <nav class="nav-links">
+                            <a href="index.html" class="nav-link">Products</a>
+                            <a href="cart.html" class="cart-btn" aria-label="Cart">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                                <span id="cart-count-badge" class="cart-badge hidden">0</span>
+                            </a>
+                        </nav>
+                    </div>
+                </div>
+            `;
+
+            cart.subscribe(c => {
+                const count = c.getCount();
+                const badge = document.getElementById('cart-count-badge');
+                if (badge) {
+                    badge.innerText = count;
+                    badge.classList.toggle('hidden', count === 0);
+                }
+            });
+        }
+
+        function adjustColorOpacity(hex, opacity) {
+            let c;
+            if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
+                c = hex.substring(1).split('');
+                if (c.length == 3) {
+                    c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+                }
+                c = '0x' + c.join('');
+                return 'rgba(' + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(',') + ',' + opacity + ')';
+            }
+            return hex;
+        }
+
+        // ----- PAGE SPECIFIC: HOME -----
+        async function loadBanner() {
+            try {
+                const docRef = db.collection('shop_settings').doc('main');
+                const docSnap = await docRef.get();
+                if (docSnap.exists) {
+                    const data = docSnap.data();
+                    if (data.bannerUrl) {
+                        const bannerContainer = document.getElementById('banner-container');
+                        const bannerImg = document.getElementById('banner-img');
+                        if (bannerContainer && bannerImg) {
+                            bannerImg.src = data.bannerUrl;
+                            bannerContainer.classList.remove('hidden');
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log("No banner settings found");
+            }
+        }
+
+        async function loadProducts() {
+            const grid = document.getElementById('product-list');
+
+            try {
+                const querySnapshot = await db.collection('products').get();
+
+                if (querySnapshot.empty) {
+                    grid.innerHTML = `
+                        <div class="card text-center" style="grid-column: 1 / -1; padding: 4rem;">
+                            <p class="text-muted">No products found.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                querySnapshot.forEach((doc) => {
+                    const product = doc.data();
+                    const id = doc.id;
+                    const price = parseFloat(product.price).toFixed(2);
+
+                    html += `
+                        <a href="product.html?id=${id}" class="card" style="text-decoration: none; color: inherit; display: flex; flex-direction: column;">
+                            <div style="aspect-ratio: 16/9; background-color: rgba(255,255,255,0.05); border-radius: 0.5rem; overflow: hidden; margin-bottom: 1rem;">
+                                ${product.imageUrl
+                            ? `<img src="${product.imageUrl}" alt="${product.title}" style="width: 100%; height: 100%; object-fit: cover;">`
+                            : `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                                         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22v-10"/></svg>
+                                       </div>`
+                        }
+                            </div>
+                            <h3 class="font-bold text-2xl mb-2">${product.title}</h3>
+                            <p class="text-muted mb-4" style="flex-grow: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${product.description || ''}</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+                                <span class="text-2xl font-bold" style="color: var(--primary-color);">$${price}</span>
+                                <div class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">View Details</div>
+                            </div>
+                        </a>
+                    `;
+                });
+                grid.innerHTML = html;
+
+            } catch (error) {
+                console.error("Error loading products:", error);
+                grid.innerHTML = `
+                    <div class="card text-center" style="grid-column: 1 / -1; padding: 4rem;">
+                        <p style="color: var(--danger); margin-bottom: 1rem;">Failed to load products.</p>
+                        <p class="text-muted text-sm">Check console for Firebase errors.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // INIT
+        document.addEventListener('DOMContentLoaded', () => {
+            renderHeader();
+            loadBanner();
+            loadProducts();
+        });
+    </script>
+</body>
+
 </html>
